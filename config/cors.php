@@ -8,6 +8,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:5173',
+        "https://japanese-academy.vercel.app/"
     ],
 
     'allowed_headers' => ['*'],
