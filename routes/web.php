@@ -6,3 +6,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\NewController;
 
 
+Route::get('/', function () {
+    return 'welcome';
+});
