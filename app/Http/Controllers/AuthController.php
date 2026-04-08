@@ -13,6 +13,7 @@ class AuthController extends Controller
     // 🔹 Register
     public function register(Request $request)
     {
+
         $request->validate([
             'email'=>'required|email|unique:users',
             'password'=>'required|min:8|confirmed',
@@ -27,26 +28,52 @@ class AuthController extends Controller
         ]);
 
         $otp = rand(100000,999999);
+        $user = User::where('email', $request->email)->first();
+        if ($user) {
+            // 👇 المستخدم موجود
+            if ($user->email_verified_at) {
+                return response()->json([
+                    'message' => 'الايميل مسجل من قبل. بإمكانك تسجيل الدخول.'
+                ], 400);
+            }
 
+            // 👇 غير مفعل → نكمل عليه
+            $user->update([
+                    'otp' => $otp,
+                    'first_name'=>$request->first_name,
+                    'last_name'=>$request->last_name,
+                    'phone'=>$request->phone,
+                    'age'=>$request->age,
+                    'gender'=>$request->gender,
+                    'country'=>$request->country,
+                    'education_level'=>$request->education_level,
+                    'japanese_level'=>$request->japanese_level,
+                    'otp_expires_at' => now()->addMinutes(10),
+                    'password' => Hash::make($request->password), // optional
+            ]);
+
+        } else {
+            // 👇 مستخدم جديد
         $user = User::create([
-            'email'=>$request->email,
-            'password'=>Hash::make($request->password),
-            'first_name'=>$request->first_name,
-            'last_name'=>$request->last_name,
-            'phone'=>$request->phone,
-            'age'=>$request->age,
-            'gender'=>$request->gender,
-            'country'=>$request->country,
-            'education_level'=>$request->education_level,
-            'japanese_level'=>$request->japanese_level,
-            'otp'=>$otp,
-            'otp_expires_at'=>now()->addMinutes(10)
-        ]);
+                    'email'=>$request->email,
+                    'password'=>Hash::make($request->password),
+                    'first_name'=>$request->first_name,
+                    'last_name'=>$request->last_name,
+                    'phone'=>$request->phone,
+                    'age'=>$request->age,
+                    'gender'=>$request->gender,
+                    'country'=>$request->country,
+                    'education_level'=>$request->education_level,
+                    'japanese_level'=>$request->japanese_level,
+                    'otp'=>$otp,
+                    'otp_expires_at'=>now()->addMinutes(10)
+                ]);
+        }
 
         Mail::to($user->email)->send(new SendOtpMail($otp));
 
         return response()->json([
-            'message'=>'Registered. Check email for OTP'
+            'message'=>'تم تسجيلك في موقعنا يرجى ادخال رمز التحقق لتأكيد الحساب.'
         ]);
     }
 
